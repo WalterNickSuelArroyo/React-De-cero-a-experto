@@ -470,11 +470,364 @@ export function MyAwesomeApp() {
 
 ## 41. Componente - ItemCounter
 
+El instructor inicia la construcción de un componente típico de un carrito de compras: un contador de artículos (ItemCounter.tsx). Utiliza un "snippet" de VS Code (rafc) para generar rápidamente la estructura del componente de función. Tras importarlo en el archivo principal (FirstStepsApp.tsx), maqueta la interfaz visual agregando botones para incrementar y decrementar, y usando flexbox en línea para alinear los elementos. Sin embargo, al final de la clase se topa con un muro: al duplicar el componente, todos muestran la misma información ("Nintendo Switch 2"), evidenciando la necesidad de aprender a pasar datos externos hacia el interior de un componente (lo que se conoce como "props" en la siguiente clase).
+
+**1. Organización de Carpetas**
+
+Como el instructor mencionó anteriormente, React no te obliga a tener una estructura estricta, pero las buenas prácticas sí lo exigen.
+
+    - Crear una carpeta shopping-cart dentro de src es una forma de decirle al equipo de desarrollo (o a tu yo del futuro): "Todos los archivos relacionados con la funcionalidad del carrito de compras vivirán aquí".
+
+    - El uso de nombres de directorios en minúsculas y con guiones (ej. shopping-cart, no ShoppingCart) es una convención estándar en el mundo del desarrollo web.
+
+**2. Acelerando el flujo de trabajo con Snippets**
+
+Escribir export function MiComponente() { return (...) } cientos de veces se vuelve tedioso.
+
+El comando rafc (React Arrow Function Component) es un "snippet" o atajo de teclado proporcionado por extensiones de VS Code.
+
+Al teclearlo y presionar Tab, el editor escribe automáticamente toda la plantilla de un componente y usa el nombre del archivo (ItemCounter) para nombrar la función. ¡Un salvavidas de productividad!
+
+**3. Estilos en Línea y Flexbox**
+
+El instructor aplica estilos en línea (style={{ ... }}) a la etiqueta <section>. Aquí se aplica CSS puro utilizando la convención camelCase vista en la clase anterior:
+
+display: 'flex' y alignItems: 'center': Alinea horizontalmente y centra verticalmente el texto, los botones y el número en una sola línea estética.
+
+gap: 10: Crea un espacio uniforme de 10 píxeles entre todos los elementos, evitando que se peguen.
+
+**4. El Problema Planteado: Componentes Estáticos vs. Dinámicos**
+
+Aquí es donde la clase deja la gran incógnita para la siguiente lección.
+
+El instructor importó el componente tres veces en FirstStepsApp:
+
+```typescript
+<ItemCounter />
+<ItemCounter />
+<ItemCounter />
+```
+
+Y el resultado visual fue:
+    - Nintendo Switch 2 [-1] 10 [+1]
+    - Nintendo Switch 2 [-1] 10 [+1]
+    - Nintendo Switch 2 [-1] 10 [+1]
+
+La Reflexión:
+De nada sirve reutilizar HTML (JSX) si no podemos cambiar los datos que muestra. En un carrito real, el primer ítem podría ser un "Curso de React" empezando en 1 cantidad, el segundo un "Curso de Node" en 2 cantidades, etc.
+
+El componente necesita una forma de abrir sus puertas para recibir información desde afuera. Esa información parametrizable se llama Properties (o "Props" para abreviar), y será el núcleo de tu próxima clase.
+
+```typescript
+export const ItemCounter = () => {
+  return (
+    <section
+    style = {{
+        display: 'flex',
+        gap: '1rem',
+        alignItems: 'center',
+        marginTop: 10,
+    }}>
+        <span
+        style = {{
+            width: 150,
+        }}>
+            Nintendo Switch 2
+        </span>
+        <button>+1</button>
+        <span>10</span>
+        <button>-1</button>
+    </section>
+  )
+}
+```
+
+```typescript
+import { ItemCounter } from "./shopping-cart/ItemCounter";
+
+export function FirstStepsApp() {
+    return (
+        <>
+            <h1>Carrito de compras</h1>
+            <ItemCounter />
+            <ItemCounter />
+            <ItemCounter />
+        </>
+    )}
+```
+
 ## 42. Propiedades del componente - Props
+
+El instructor introduce el concepto de "Props" (propiedades), las cuales son valores inmutables que se envían desde un componente padre hacia un componente hijo para personalizar su comportamiento o apariencia. A través de un ejercicio práctico, se define una interfaz Props para tipar estrictamente lo que el componente ItemCounter debe recibir (como el name del producto). Luego, se introduce el concepto de propiedades opcionales (?) para añadir la cantidad (quantity) del producto. Finalmente, se muestra cómo desestructurar esas "props" dentro del componente y renderizarlas en el JSX.
+
+**1. ¿Qué son las Props?**
+
+Imagina que un componente de React es como una función de JavaScript normal. Las "Props" son simplemente los argumentos que le pasas a esa función para que haga su trabajo.
+
+La Regla de Oro: Las Props son de solo lectura (inmutables). Un componente hijo nunca debe intentar modificar las props que le fueron entregadas por su padre. Si necesitas datos que cambien, usarás el "State" (Estado), que veremos más adelante.
+
+**2. Tipando las Props con Interfaces**
+
+En JavaScript puro, podrías pasar cualquier cosa como Prop y el componente intentaría usarlo, lo que a menudo resulta en errores. TypeScript nos protege de esto obligándonos a definir un "contrato" (una Interfaz).
+
+```typescript
+interface Props {
+    name: string;
+}
+```
+
+Al asignarle esta interfaz al componente: export function ItemCounter(props: Props), TypeScript vigilará que, cada vez que uses <ItemCounter/>, obligatoriamente le envíes la propiedad name con un valor de texto. Si olvidas enviarla, el editor mostrará un error rojo antes de que siquiera intentes correr la aplicación.
+
+**3. Desestructuración de Props**
+
+En lugar de escribir props.name y props.quantity en todo el archivo, el instructor aplica la técnica de desestructuración directamente en los parámetros de la función.
+
+    - Antes: export function ItemCounter(props: Props) -> Tienes que usar {props.name} en el HTML.
+
+    - Después: export function ItemCounter({ name, quantity }: Props) -> Puedes usar directamente {name} en el HTML, haciendo el código mucho más limpio.
+
+**4. Props Opcionales vs. Tipos de Unión**
+
+El instructor plantea un escenario interesante: ¿Qué pasa si no todos los productos necesitan mostrar una cantidad inicial?
+Tienes dos formas de decirle a TypeScript que una Prop no es estrictamente necesaria:
+
+La forma opcional (El símbolo de interrogación ?):
+
+```typescript
+interface Props {
+    name: string;
+    quantity?: number; 
+}
+```
+
+    Aquí, puedes usar <ItemCounter name="Juego"/> sin pasar el quantity. TypeScript no se quejará, y dentro del componente, quantity valdrá undefined por defecto. Esta es la forma más común y limpia.
+
+La forma explícita (Tipos de Unión)
+
+```typescript
+interface Props {
+        name: string;
+        quantity: number | undefined; 
+    }
+```
+
+    Aquí, estás **obligado** a escribir la propiedad al usar el componente, aunque su valor sea indefinido: `<ItemCounter name="Juego" quantity="{undefined}"/>`. Como menciona el instructor, esto es útil si quieres forzar al desarrollador a pensar explícitamente en esa propiedad cada vez que usa el componente, pero suele ser más verboso.
+
+**CODIGO DE LA CLASE**
+
+```typescript
+interface ItemCounterProps {
+    name: string;
+    quantity?: number;
+}
+
+export const ItemCounter = ({name, quantity = 1}: ItemCounterProps) => {
+  return (
+    <section
+    style = {{
+        display: 'flex',
+        gap: '1rem',
+        alignItems: 'center',
+        marginTop: 10,
+    }}>
+        <span
+        style = {{
+            width: 150,
+        }}>
+            {name}
+        </span>
+        <button>+1</button>
+        <span>{quantity}</span>
+        <button>-1</button>
+    </section>
+  )
+}
+```
+
+```typescript
+import { ItemCounter } from "./shopping-cart/ItemCounter";
+
+export function FirstStepsApp() {
+    return (
+        <>
+            <h1>Carrito de compras</h1>
+            <ItemCounter name = "Nintendo Switch 2" quantity={5} />
+            <ItemCounter name = "PlayStation 5" quantity={3} />
+            <ItemCounter name = "Xbox Series X"/>
+        </>
+    )}
+```
 
 ## 43. Mostrar listados de elementos
 
+En esta clase, el instructor resuelve el problema de tener los componentes <ItemCounter/> copiados y pegados manualmente en el código. Para hacerlo dinámico, crea un arreglo de objetos que simula una base de datos o un estado del carrito de compras. Utilizando el método .map() de JavaScript, itera sobre ese arreglo para renderizar automáticamente un componente por cada producto, inyectándole sus propiedades específicas. Finalmente, se aborda el famoso error del "unique key prop" en React, explicando la regla de oro de no usar el índice del arreglo como identificador.
+
+**1. El Origen de Datos (Interfaces y Arreglos)**
+
+Para dejar de escribir el HTML a mano, primero necesitas datos reales (o simulados).
+
+Se crea la interfaz ItemInCart para definir estrictamente qué forma tendrá cada producto (un productName de tipo string y un quantity de tipo number).
+
+Se crea el arreglo itemsInCart fuera del componente principal. Como aprendimos en la clase anterior, al estar fuera, evitamos que este arreglo estático se vuelva a crear en la memoria cada vez que React actualice la pantalla.
+
+**2. Renderizado Dinámico con .map()**
+
+En React, casi nunca usarás ciclos for o forEach para dibujar listas en pantalla. El rey indiscutible es el método .map().
+
+¿Por qué .map()? Porque este método toma un arreglo original, lo transforma y retorna un arreglo completamente nuevo.
+
+React es lo suficientemente inteligente como para tomar un arreglo de elementos JSX y dibujarlos uno debajo del otro de forma automática.
+
+El código toma cada item del arreglo y retorna un componente, inyectando las variables dinámicamente en las props:
+
+```typescript
+{
+  itemsInCart.map( (item) => (
+      <ItemCounter 
+          name={item.productName} 
+          quantity={item.quantity} 
+      />
+  ))
+}
+```
+
+**3. La Propiedad Obligatoria: key**
+
+Al guardar los cambios y usar .map(), la interfaz funciona, pero la consola del navegador lanza un error rojo brillante: "Each child in a list should have a unique 'key' prop".
+
+¿Para qué sirve el key? React utiliza un sistema llamado Virtual DOM para actualizar la pantalla de forma ultrarrápida. Si tienes una lista de 100 productos y borras el número 43, React necesita saber exactamente cuál se borró para actualizar solo esa pequeña parte de la pantalla y no los 100 productos de nuevo. El key es esa etiqueta de identificación única.
+
+La trampa del "Index": El método .map() te proporciona el índice de la iteración (0, 1, 2, 3...). Es muy tentador usar key={index}, pero es una terrible práctica en React. Si eliminas el elemento en la posición 0, el elemento que estaba en la posición 1 ahora pasa a ser el 0. React se confunde, piensa que el elemento no se borró sino que cambió de contenido, y esto genera bugs visuales catastróficos.
+
+La solución: Siempre debes usar un identificador único del objeto. En una base de datos real usarías el item.id. En este ejercicio, como no hay IDs, el instructor utiliza key={item.productName} asumiendo que no habrá dos productos con exactamente el mismo nombre en el carrito.
+
+**CODIGO DE LA CLASE**
+
+```typescript
+import { ItemCounter } from "./shopping-cart/ItemCounter";
+
+interface ItemInCart {
+    productName: string;
+    quantity: number;
+}
+
+const itemsInCart: ItemInCart[] = [
+    { productName: 'Nintendo Switch 2', quantity: 5 },
+    { productName: 'PlayStation 5', quantity: 3 },
+    { productName: 'Xbox Series X', quantity: 0 },
+    { productName: 'Steam Deck', quantity: 2 },
+]
+
+export function FirstStepsApp() {
+    return (
+        <>
+            <h1>Carrito de compras</h1>
+
+            {itemsInCart.map(({ productName, quantity }) => (
+                <ItemCounter key={productName} name={productName} quantity={quantity} />
+            ))}
+
+            {/* <ItemCounter name = "Nintendo Switch 2" quantity={5} />
+            <ItemCounter name = "PlayStation 5" quantity={3} />
+            <ItemCounter name = "Xbox Series X"/> */}
+        </>
+    )}
+```
+
 ## 44. Eventos de los elementos
+
+El instructor demuestra cómo escuchar y reaccionar a las interacciones del usuario en React utilizando "Event Listeners" (escuchadores de eventos). Explora la sintaxis camelCase de los eventos en JSX (como onClick o onMouseEnter) y muestra cómo ejecutar funciones anónimas en respuesta a estos. Posteriormente, para aplicar buenas prácticas de Clean Code, extrae la lógica a una función independiente llamada handleClick dentro del componente. Finalmente, advierte sobre la relación de tipos en TypeScript entre la función asignada y el evento nativo del navegador (como MouseEvent), preparando el terreno para la manipulación del estado en la siguiente lección.
+
+**1. Eventos en JSX (La regla del on)**
+
+En HTML tradicional, los eventos se escriben todo en minúsculas (ej. onclick="..."). En React, como estás escribiendo JavaScript bajo el capó, las reglas cambian:
+
+    - Todos los eventos comienzan con la palabra on.
+    - Deben escribirse en formato camelCase.
+    - Ejemplos: onClick, onMouseEnter, onChange, onSubmit.
+
+Al usar TypeScript, el editor de código te mostrará automáticamente todos los eventos disponibles tan pronto como escribas on dentro de una etiqueta, lo cual es una gran ventaja del autocompletado.
+
+**2. El Objeto "Event"**
+
+Cuando el usuario hace clic, el navegador no solo ejecuta tu código, sino que también genera un paquete de información sobre cómo y dónde ocurrió esa interacción.
+
+```typescript
+<button onClick={ (event) => console.log(event) }> +1 </button>
+```
+
+Este objeto event contiene detalles minuciosos: las coordenadas exactas X e Y del clic en la pantalla, si el usuario tenía presionada la tecla Shift al hacer clic, o qué elemento HTML fue presionado exactamente. Aunque el instructor no lo usa en este ejercicio, es vital saber que está ahí para casos futuros (como prevenir que un formulario recargue la página).
+
+**3. Clean Code: Extraer la lógica**
+
+Escribir la función de flecha directamente dentro de la etiqueta <button> funciona, pero si la lógica empieza a crecer (ej. hacer una petición a la base de datos, validar el carrito, mostrar una alerta), tu JSX se volverá ilegible.
+
+La buena práctica: Crear una función separada (usualmente con el prefijo handle...) dentro del componente:
+
+```typescript
+export function ItemCounter({ name, quantity }: Props) {
+    
+    // Función separada (Lógica)
+    const handleClick = () => {
+        console.log(`Click en ${name}`);
+    }
+
+    return (
+        // JSX limpio (Vista)
+        <button onClick={handleClick}> +1 </button>
+    )
+}
+```
+
+**4. Pasar Funciones por Referencia (El tip de optimización)**
+
+¿Notaste que el instructor escribió onClick={handleClick} y NO onClick={handleClick()}?
+
+Si pones los paréntesis (), la función se ejecutará inmediatamente en cuanto la página se cargue, sin esperar a que el usuario haga clic.
+
+Al poner solo el nombre (pasar por referencia), le estás diciendo a React: "Toma esta función y guárdala. Ejecútala solo cuando el usuario haga clic".
+
+Además, al pasarla por referencia, React automáticamente inyectará ese objeto Event del que hablamos antes en el primer parámetro de tu función handleClick.
+
+
+
+**CODIGO DE LA CLASE**
+
+```typescript
+interface ItemCounterProps {
+    name: string;
+    quantity?: number;
+}
+
+export const ItemCounter = ({name, quantity = 1}: ItemCounterProps) => {
+
+    const handleClick = () => {
+        console.log(`Click en ${name}`)
+    }
+
+  return (
+    <section
+    style = {{
+        display: 'flex',
+        gap: '1rem',
+        alignItems: 'center',
+        marginTop: 10,
+    }}>
+        <span
+        style = {{
+            width: 150,
+        }}>
+            {name}
+        </span>
+        <button
+            onClick={handleClick}
+        >+1</button>
+        <span>{quantity}</span>
+        <button>-1</button>
+    </section>
+  )
+}
+```
 
 ## 45. Hook - useState
 
